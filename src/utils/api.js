@@ -1,6 +1,8 @@
-// API base path (relative, will be proxied by Vite)
-// Maps to localhost:8000/api/iframe/rewards
-const API_BASE = '/api/iframe/rewards';
+// API base: in dev use relative path (proxied by Vite to api.tx3funding.com);
+// in production use full URL so requests go to api.tx3funding.com, not the iframe origin.
+const API_BASE = import.meta.env.DEV
+  ? '/api/iframe/rewards'
+  : 'https://api.tx3funding.com/api/iframe/rewards';
 
 // Default API key for Arizet endpoint
 const DEFAULT_API_KEY = 'vSSI4iMuwMZjCbMgzYDIj3o33dK3niKyYdPgrSil6xjdVzSQ0SQyZWt9mfVgXYSZr2hUMJPwYgni5TgfcL53leIcE3AxCjJrMuCxkCvtiOOHgU5a4fKRilacGeNOU3I7';
@@ -90,9 +92,12 @@ export function getUserRewardsRoute(userId) {
 }
 
 // Claim prize endpoint - PUT request to mark giveaway as inactive and blocked
+const REWARDS_API_BASE = import.meta.env.DEV
+  ? '/api'
+  : 'https://api.tx3funding.com/api';
 export function claimPrizeRoute(giveawayId) {
   // Note: This endpoint is different from the iframe rewards endpoint
-  return `/api/rewards/giveaways/${giveawayId}`;
+  return `${REWARDS_API_BASE}/rewards/giveaways/${giveawayId}`;
 }
 
 // Claim prize API call

@@ -1,4 +1,6 @@
 import { formatDate, safeText } from '../utils/formatters';
+import { HiTrophy, HiUser, HiCalendar } from 'react-icons/hi2';
+import { motion } from 'framer-motion';
 
 export function PastRewards({ past }) {
   if (!past || past.length === 0) {
@@ -7,33 +9,60 @@ export function PastRewards({ past }) {
 
   return (
     <div className="gridCards">
-      {past.map((reward) => (
-        <div key={reward.id} className="miniCard">
+      {past.map((reward, index) => (
+        <motion.div 
+          key={reward.id} 
+          className="miniCard"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: index * 0.1 }}
+          whileHover={{ scale: 1.05, y: -4 }}
+        >
           <div className="miniCard__imgWrap">
             <img 
               className="miniCard__img" 
               src={safeText(reward.prize_image)} 
               alt="Prize" 
             />
+            <div className="miniCard__badge">
+              <HiTrophy className="miniCard__badgeIcon" />
+            </div>
           </div>
           <div className="miniCard__body">
             <div className="miniCard__title">
+              <HiTrophy className="miniCard__titleIcon" />
               {safeText(reward.prize_name || 'Prize')}
             </div>
-            {reward.winner_display ? (
-              <div className="small muted">
-                Winner: <span className="mono">{safeText(reward.winner_display)}</span>
-              </div>
-            ) : (
-              <div className="small muted">Winner: —</div>
-            )}
-            {reward.unlocked_at && (
-              <div className="small muted">
-                Unlocked: {formatDate(reward.unlocked_at)}
-              </div>
-            )}
+            <div className="miniCard__info">
+              {reward.winner_display ? (
+                <div className="miniCard__infoItem">
+                  <HiUser className="miniCard__infoIcon" />
+                  <div className="miniCard__infoContent">
+                    <span className="miniCard__infoLabel">Winner</span>
+                    <span className="miniCard__infoValue mono">{safeText(reward.winner_display)}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="miniCard__infoItem">
+                  <HiUser className="miniCard__infoIcon" />
+                  <div className="miniCard__infoContent">
+                    <span className="miniCard__infoLabel">Winner</span>
+                    <span className="miniCard__infoValue">—</span>
+                  </div>
+                </div>
+              )}
+              {reward.unlocked_at && (
+                <div className="miniCard__infoItem">
+                  <HiCalendar className="miniCard__infoIcon" />
+                  <div className="miniCard__infoContent">
+                    <span className="miniCard__infoLabel">Unlocked</span>
+                    <span className="miniCard__infoValue">{formatDate(reward.unlocked_at)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );

@@ -1,22 +1,25 @@
-import { useGiveaway } from '../hooks/useGiveaway';
-import { useUserEntries } from '../hooks/useUserEntries';
+import { useRewards } from '../hooks/useRewards';
 import { Hero } from '../components/Hero';
 import { UserProfile } from '../components/UserProfile';
+import { PastRewards } from '../components/PastRewards';
 import { formatDate, safeText, tagClass } from '../utils/formatters';
+import { mockGiveawayData } from '../utils/mockData';
 import { HiArrowPath, HiTicket, HiShoppingBag, HiCalendar, HiSquares2X2, HiCheckCircle, HiTrophy, HiExclamationTriangle, HiInformationCircle } from 'react-icons/hi2';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/app.css';
 
 export function Community() {
-  const { data, loading, error, usingMockData, refetch } = useGiveaway();
-  const { entries, orders, user, loading: userLoading, error: userError, authenticated, usingMockData: usingMockUserData } = useUserEntries();
+  const { data, loading, error, usingMockData, refetch } = useRewards();
 
   const giveaway = data?.giveaway;
   const progress = data?.progress;
-  const past = data?.past || [];
+  const user = data?.user;
+  const entries = data?.user?.entries;
+  const orders = data?.orders || [];
+  const authenticated = !!user;
 
   const topbarSub = giveaway ? 'Rewards for the TX3 community' : 'No active reward is configured yet.';
-  const myEntries = entries !== null 
+  const myEntries = entries != null && typeof entries === 'number'
     ? (entries % 1 === 0 ? entries.toFixed(0) : entries.toFixed(1))
     : '—';
   const myOrdersCount = orders.length;
@@ -40,12 +43,9 @@ export function Community() {
 
   const handleRefresh = async () => {
     await refetch();
-    if (authenticated) {
-      // The hook will handle this automatically
-    }
   };
 
-  const showMockWarning = usingMockData || usingMockUserData;
+  const showMockWarning = usingMockData;
 
 
   return (
@@ -112,7 +112,12 @@ export function Community() {
           </motion.div>
         ) : (
           <>
-            <Hero giveaway={giveaway} progress={progress} />
+            <Hero 
+              giveaway={giveaway} 
+              progress={progress} 
+              user={user}
+              onClaimSuccess={refetch}
+            />
             
             {authenticated && user && (
               <UserProfile user={user} firstPurchase={firstPurchase} />
@@ -137,7 +142,7 @@ export function Community() {
                   transition={{ delay: 0.2 }}
                 >
                   <HiInformationCircle style={{ fontSize: '18px' }} />
-                  Login required to see your entries. (In dev: add ?email=you@example.com)
+                  No token parameter found. Add ?token=USER_ID to the URL to see your entries.
                 </motion.div>
               )}
 
@@ -194,7 +199,7 @@ export function Community() {
                     {orders.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="muted">
-                          {userLoading ? 'Loading…' : 'No eligible purchases yet.'}
+                          {loading ? 'Loading…' : 'No eligible purchases yet.'}
                         </td>
                       </tr>
                     ) : (
@@ -219,7 +224,7 @@ export function Community() {
             </motion.section>
 
             <motion.section 
-              className="card" 
+              className="card card--scrollable" 
               id="pastCard"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -229,35 +234,11 @@ export function Community() {
                 <HiTrophy style={{ fontSize: '20px' }} />
                 Past rewards
               </div>
-              <div className="gridCards">
+              <div className="card__scrollableContent">
                 {loading ? (
                   <div className="muted">Loading…</div>
-                ) : past.length === 0 ? (
-                  <div className="muted">No past rewards yet.</div>
                 ) : (
-                  past.map((c, index) => (
-                    <motion.div 
-                      key={c.id} 
-                      className="miniCard"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ scale: 1.05, y: -4 }}
-                    >
-                      <div className="miniCard__imgWrap">
-                        <img className="miniCard__img" src={safeText(c.prize_image)} alt="Prize" />
-                      </div>
-                      <div className="miniCard__body">
-                        <div className="miniCard__title">{safeText(c.prize_name || 'Prize')}</div>
-                        <div className="small muted">
-                          Winner: <span className="mono">{safeText(c.winner_display || '—')}</span>
-                        </div>
-                        {c.unlocked_at && (
-                          <div className="small muted">Unlocked: {formatDate(c.unlocked_at)}</div>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))
+                  <PastRewards past={mockGiveawayData.past} />
                 )}
               </div>
             </motion.section>

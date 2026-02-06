@@ -8,6 +8,11 @@ export function getParam(name) {
   return params.get(name);
 }
 
+// Get user ID from token parameter in URL
+export function getUserId() {
+  return getParam('token');
+}
+
 // Add admin key to URL
 export function withAdmin(url) {
   const params = new URLSearchParams(window.location.search);
@@ -44,4 +49,32 @@ export async function post(url) {
 // API route builders
 export function apiRoute(path) {
   return `${API_BASE}${path}`;
+}
+
+// Get user rewards data (single endpoint)
+export function getUserRewardsRoute(userId) {
+  return `${API_BASE}/${userId}`;
+}
+
+// Claim prize endpoint
+export function claimPrizeRoute(rewardId) {
+  return `${API_BASE}/${rewardId}/winner`;
+}
+
+// Claim prize API call
+export async function claimPrize(rewardId, userData) {
+  const payload = {
+    user_id: userData.id,
+    user_email: userData.email,
+    user_name: userData.name || null,
+    claimed_at: new Date().toISOString(),
+  };
+  
+  return fetchJSON(claimPrizeRoute(rewardId), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
 }

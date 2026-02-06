@@ -2,6 +2,8 @@ import { useRewards } from '../hooks/useRewards';
 import { Hero } from '../components/Hero';
 import { UserProfile } from '../components/UserProfile';
 import { PastRewards } from '../components/PastRewards';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { ErrorScreen } from '../components/ErrorScreen';
 import { formatDate, safeText, tagClass } from '../utils/formatters';
 import { mockGiveawayData } from '../utils/mockData';
 import { HiArrowPath, HiTicket, HiShoppingBag, HiCalendar, HiSquares2X2, HiCheckCircle, HiTrophy, HiExclamationTriangle, HiInformationCircle } from 'react-icons/hi2';
@@ -9,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/app.css';
 
 export function Community() {
-  const { data, loading, error, usingMockData, refetch } = useRewards();
+  const { data, loading, error, errorStatus, usingMockData, refetch } = useRewards();
 
   const giveaway = data?.giveaway;
   const progress = data?.progress;
@@ -47,6 +49,27 @@ export function Community() {
 
   const showMockWarning = usingMockData;
 
+  // Show loading spinner
+  if (loading) {
+    return (
+      <div className="page page--wide">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  // Show error screen if there's an error
+  if (error && !data) {
+    return (
+      <div className="page page--wide">
+        <ErrorScreen 
+          error={error} 
+          statusCode={errorStatus}
+          onRetry={refetch} 
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="page page--wide">
@@ -78,7 +101,7 @@ export function Community() {
             whileTap={{ scale: 0.95 }}
           >
             <HiArrowPath style={{ fontSize: '16px' }} />
-            <span className="btn-text-mobile-hidden">Refresh</span>
+            <span>Refresh</span>
           </motion.button>
         </div>
       </motion.header>
@@ -100,19 +123,8 @@ export function Community() {
           )}
         </AnimatePresence>
         
-        {loading ? (
-          <motion.div 
-            className="muted" 
-            style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
-          >
-            Loading…
-          </motion.div>
-        ) : (
-          <>
-            <Hero 
+        <>
+          <Hero 
               giveaway={giveaway} 
               progress={progress} 
               user={user}
@@ -235,11 +247,7 @@ export function Community() {
                 Past rewards
               </div>
               <div className="card__scrollableContent">
-                {loading ? (
-                  <div className="muted">Loading…</div>
-                ) : (
-                  <PastRewards past={mockGiveawayData.past} />
-                )}
+                <PastRewards past={data?.rewards || mockGiveawayData.past} />
               </div>
             </motion.section>
 
@@ -251,8 +259,7 @@ export function Community() {
             >
               Entries are calculated from eligible purchases and may update with a short delay.
             </motion.section>
-          </>
-        )}
+        </>
       </main>
     </div>
   );

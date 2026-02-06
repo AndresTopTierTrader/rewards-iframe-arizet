@@ -12,17 +12,27 @@ export function Hero({ giveaway, progress, user, onClaimSuccess }) {
   const [claimError, setClaimError] = useState(null);
 
   const status = (giveaway.status || '').toLowerCase();
-  const isUnlocked = status === 'unlocked';
-  const isLocked = giveaway.locked === 'true' || giveaway.locked === true;
-  const canClaim = isUnlocked && !isLocked && user && user.id;
+  const isUnlocked = status === 'unlocked' || status === 'active';
+  // locked is now a boolean in the new API
+  const isLocked = giveaway.locked === true || giveaway.locked === 'true';
+  // Only show claim button when progress is above 100% (prize is unlocked)
+  const displayPct = Math.max(0, Math.min(100, progress?.display_pct || 0));
+  const isProgressComplete = (progress?.display_pct || 0) > 100;
+  const canClaim = isUnlocked && !isLocked && isProgressComplete && user && user.id;
+  
+  // Calculate tickets needed
+  const currentTickets = progress?.current_tickets || 0;
+  const prizeTickets = giveaway.prize_tickets || 0;
+  const ticketsNeeded = Math.max(0, prizeTickets - currentTickets);
 
   const prizeImageSrc = giveaway.prize_image || '/static/rolex-datejust.png';
   const statusPillClass = statusClass(giveaway.status);
   const statusPillText = niceStatus(giveaway.status);
   const prizeName = giveaway.prize_name || 'Prize';
-  const prizeMeta = giveaway.prize_msrp_usd 
-    ? `MSRP: ${fmtMoney(giveaway.prize_msrp_usd)}` 
-    : 'MSRP: —';
+  // Use price_usd instead of prize_msrp_usd
+  const prizeMeta = giveaway.price_usd 
+    ? `Estimated Dolar Value: ${fmtMoney(giveaway.price_usd)}` 
+    : 'Estimated Dolar Value: —';
   const prizeDesc = giveaway.description || '';
   
   let progressHint = 'Updates periodically';
@@ -38,19 +48,23 @@ export function Hero({ giveaway, progress, user, onClaimSuccess }) {
     progressIcon = <HiExclamationTriangle style={{ fontSize: '16px' }} />;
   }
   
-  const displayPct = Math.max(0, Math.min(100, progress?.display_pct || 0));
   const showUnlockMessage = isUnlocked && !isLocked;
   const unlockMessage = giveaway.unlocked_message || 'Prize is still open! You can still win this prize.';
 
   const handleClaimPrize = async () => {
-    if (!user || !user.id || !giveaway.id) return;
+    if (!user || !user.id || !giveaway.id) {
+      console.error('Missing required data for claim:', { user, giveawayId: giveaway.id });
+      return;
+    }
     
     setIsClaiming(true);
     setClaimError(null);
     
     try {
+      // Use giveaway.id (should be the actual ID like 'fXHVo5uRLaEPsdNnjgSq') to mark the giveaway as inactive and blocked
+      console.log('Claiming prize with giveaway ID:', giveaway.id);
       await claimPrize(giveaway.id, user);
-      // Refresh data to get updated locked status
+      // Refresh data to get updated locked/blocked status
       if (onClaimSuccess) {
         onClaimSuccess();
       }
@@ -69,7 +83,66 @@ export function Hero({ giveaway, progress, user, onClaimSuccess }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
+      style={{ position: 'relative' }}
     >
+      {isLocked && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            backgroundColor: 'rgba(11, 17, 29, 0.7)',
+            borderRadius: '20px',
+            zIndex: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '40px',
+            textAlign: 'center',
+          }}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+            style={{
+              maxWidth: '500px',
+            }}
+          >
+            <HiExclamationTriangle 
+              style={{ 
+                fontSize: '48px', 
+                color: 'var(--gold)',
+                marginBottom: '20px',
+              }} 
+            />
+            <h3 style={{
+              fontSize: '24px',
+              fontWeight: 600,
+              color: 'var(--textPrimary)',
+              marginBottom: '12px',
+              letterSpacing: '-0.02em',
+            }}>
+              Prize Already Claimed
+            </h3>
+            <p style={{
+              fontSize: '16px',
+              color: 'var(--textSecondary)',
+              lineHeight: 1.6,
+            }}>
+              The prize has already been claimed by another trader! We will be updating on Community Rewards shortly.
+            </p>
+          </motion.div>
+        </motion.div>
+      )}
       <motion.div 
         className="hero__media"
         initial={{ opacity: 0, scale: 0.9 }}
@@ -150,6 +223,32 @@ export function Hero({ giveaway, progress, user, onClaimSuccess }) {
               transition={{ duration: 1, delay: 0.8, ease: "easeOut" }}
             />
           </div>
+          {prizeTickets > 0 && (
+            <div style={{ 
+              marginTop: '12px', 
+              padding: '10px 12px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderRadius: '8px',
+              fontSize: '13px',
+              color: 'var(--textSecondary)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <span>
+                {isProgressComplete ? (
+                  <span style={{ color: 'var(--futuresGreen)' }}>✓ Prize unlocked!</span>
+                ) : (
+                  <>
+                    <strong style={{ color: 'var(--textPrimary)' }}>{ticketsNeeded.toLocaleString()}</strong> tickets needed
+                  </>
+                )}
+              </span>
+              <span style={{ fontSize: '12px', opacity: 0.7 }}>
+                {currentTickets.toLocaleString()} / {prizeTickets.toLocaleString()}
+              </span>
+            </div>
+          )}
           {showUnlockMessage && (
             <motion.div 
               className="progressCard__bottom"
@@ -184,8 +283,10 @@ export function Hero({ giveaway, progress, user, onClaimSuccess }) {
                 gap: '8px',
                 fontSize: '16px',
                 padding: '14px 24px',
-                background: 'linear-gradient(135deg, var(--gold), #FFA500)',
-                border: '1px solid var(--gold)',
+                background: 'white',
+                color: '#0B111D',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                fontWeight: 600,
               }}
             >
               {isClaiming ? (

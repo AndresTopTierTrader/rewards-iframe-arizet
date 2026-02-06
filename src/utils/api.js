@@ -2,6 +2,23 @@
 // Maps to localhost:8000/api/iframe/rewards
 const API_BASE = '/api/iframe/rewards';
 
+// Default API key for Arizet endpoint
+const DEFAULT_API_KEY = 'vSSI4iMuwMZjCbMgzYDIj3o33dK3niKyYdPgrSil6xjdVzSQ0SQyZWt9mfVgXYSZr2hUMJPwYgni5TgfcL53leIcE3AxCjJrMuCxkCvtiOOHgU5a4fKRilacGeNOU3I7';
+
+// Get API key from environment variable, URL parameter, or use default
+export function getApiKey() {
+  // Check for API key in URL query params first (highest priority)
+  const urlKey = getParam('apiKey');
+  if (urlKey) return urlKey;
+  
+  // Fallback to environment variable (if set in build)
+  const envKey = import.meta.env.VITE_API_KEY;
+  if (envKey) return envKey;
+  
+  // Use default API key
+  return DEFAULT_API_KEY;
+}
+
 // Get URL parameter
 export function getParam(name) {
   const params = new URLSearchParams(window.location.search);
@@ -20,14 +37,27 @@ export function withAdmin(url) {
   return url + (s ? ('?' + s) : '');
 }
 
-// Fetch JSON helper
+// Fetch JSON helper with API key authentication
 export async function fetchJSON(url, opts = {}) {
-  const res = await fetch(url, {
+  const apiKey = getApiKey();
+  const headers = {
+    'Accept': 'application/json',
+    ...(opts.headers || {}),
+  };
+
+  // Add API key to headers if available
+  if (apiKey) {
+    headers['X-Api-Key'] = apiKey;
+  }
+
+  // Also add to URL if not in headers (fallback)
+  const urlWithKey = apiKey && !headers['X-Api-Key'] 
+    ? `${url}${url.includes('?') ? '&' : '?'}apiKey=${apiKey}`
+    : url;
+
+  const res = await fetch(urlWithKey, {
     ...opts,
-    headers: {
-      'Accept': 'application/json',
-      ...(opts.headers || {}),
-    },
+    headers,
   });
   
   if (!res.ok) {
@@ -35,7 +65,10 @@ export async function fetchJSON(url, opts = {}) {
     let json = null;
     try { json = txt ? JSON.parse(txt) : null; } catch {}
     const msg = json && json.detail ? json.detail : (txt || res.statusText);
-    throw new Error(`${res.status} ${res.statusText}: ${msg}`);
+    const error = new Error(`${res.status} ${res.statusText}: ${msg}`);
+    error.status = res.status;
+    error.statusCode = res.status;
+    throw error;
   }
   
   return res.json();
@@ -56,22 +89,23 @@ export function getUserRewardsRoute(userId) {
   return `${API_BASE}/${userId}`;
 }
 
-// Claim prize endpoint
-export function claimPrizeRoute(rewardId) {
-  return `${API_BASE}/${rewardId}/winner`;
+// Claim prize endpoint - PUT request to mark giveaway as inactive and blocked
+export function claimPrizeRoute(giveawayId) {
+  // Note: This endpoint is different from the iframe rewards endpoint
+  return `/api/rewards/giveaways/${giveawayId}`;
 }
 
 // Claim prize API call
-export async function claimPrize(rewardId, userData) {
+export async function claimPrize(giveawayId, userData) {
   const payload = {
-    user_id: userData.id,
-    user_email: userData.email,
-    user_name: userData.name || null,
-    claimed_at: new Date().toISOString(),
+    locked: true,
+    modifiedByUserId: String(userData.id),
+    modifiedByEmail: userData.email || '',
+    modifiedByName: userData.name || '',
   };
   
-  return fetchJSON(claimPrizeRoute(rewardId), {
-    method: 'POST',
+  return fetchJSON(claimPrizeRoute(giveawayId), {
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },

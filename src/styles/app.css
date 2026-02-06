@@ -51,6 +51,14 @@ body {
   padding: 24px;
   background: var(--bgDark);
   position: relative;
+  box-sizing: border-box;
+}
+
+/* Iframe-specific styles */
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 .page--wide {
@@ -102,10 +110,6 @@ body {
   letter-spacing: -0.03em;
   margin-bottom: 4px;
   color: var(--textPrimary);
-  background: linear-gradient(to right, var(--forexBlue), var(--futuresGreen));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .topbar__sub {
@@ -1103,7 +1107,20 @@ body {
   }
   
   .topbar__title {
-    font-size: 24px;
+    font-size: 28px;
+    color: var(--textPrimary);
+  }
+  
+  .card__title {
+    font-size: 18px;
+  }
+  
+  .hero__title {
+    font-size: 28px;
+  }
+  
+  .userProfile__name {
+    font-size: 22px;
   }
   
   .topbar__sub {
@@ -1242,6 +1259,19 @@ body {
   }
   
   .topbar__title {
+    font-size: 24px;
+    color: var(--textPrimary);
+  }
+  
+  .card__title {
+    font-size: 17px;
+  }
+  
+  .hero__title {
+    font-size: 24px;
+  }
+  
+  .userProfile__name {
     font-size: 20px;
   }
   

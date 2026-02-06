@@ -2,23 +2,21 @@
 
 export const mockGiveawayData = {
   giveaway: {
-    id: 1,
-    mode: 'demo',
-    status: 'unlocked',
+    id: 'fXHVo5uRLaEPsdNnjgSq', // Use actual giveaway ID format
+    status: 'active',
     prize_name: 'Rolex Datejust 41',
+    price_usd: 20921.93,
     prize_image: 'https://res.cloudinary.com/dmkzxsw0i/image/upload/v1770323925/dfasa_xwwkog.png',
-    prize_msrp_usd: 20000,
+    prize_tickets: 243000,
     description: 'Win a stunning Rolex Datejust 41 watch! Participate in our community rewards program by making eligible purchases.',
     start_at: '2024-01-01T00:00:00Z',
     unlocked_message: 'Prize is still open! You can still win this prize.',
-    locked: 'false',
-    revenue_target_usd: 400000,
-    target_entries: 5000,
+    locked: false,
+    blocked: false,
   },
   progress: {
     display_pct: 65.5,
-    true_pct: 65.5,
-    target_entries: 5000,
+    current_tickets: 3275,
   },
   past: [
     {

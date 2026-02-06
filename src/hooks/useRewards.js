@@ -6,30 +6,71 @@ export function useRewards() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [errorStatus, setErrorStatus] = useState(null);
   const [usingMockData, setUsingMockData] = useState(false);
 
   const loadRewards = async () => {
     const userId = getUserId();
     
     if (!userId) {
-      // No token provided, use mock data
-      console.warn('No token parameter found in URL. Using mock data.');
+      setError('No token parameter found in URL. Add ?token=USER_ID to the URL.');
+      setErrorStatus(400);
+      setLoading(false);
+      return;
+    }
+
+    // Special case: test-finished token shows mock data with completed progress
+    if (userId === 'test-finished') {
+      setLoading(true);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const mockData = {
-        giveaway: mockGiveawayData.giveaway,
+        giveaway: {
+          id: 'fXHVo5uRLaEPsdNnjgSq', // Use actual giveaway ID format
+          status: 'active',
+          prize_name: 'Rolex Datejust 41',
+          price_usd: 20921.93,
+          prize_image: 'https://res.cloudinary.com/dmkzxsw0i/image/upload/v1770323925/dfasa_xwwkog.png',
+          prize_tickets: 243000,
+          description: 'Win a stunning Rolex Datejust 41 watch! Participate in our community rewards program by making eligible purchases.',
+          start_at: '2024-01-01T00:00:00Z',
+          unlocked_message: 'Prize is still open! You can still win this prize.',
+          locked: false,
+          blocked: false,
+        },
         progress: {
-          ...mockGiveawayData.progress,
-          current_tickets: 3275,
+          display_pct: 105.5, // Above 100% to show claim button
+          current_tickets: 256500, // More than prize_tickets
         },
         user: {
-          id: null,
-          name: 'John Doe',
-          email: 'john.doe@example.com',
-          entries: mockUserEntries.entries,
+          id: 9999999999,
+          name: 'Test User',
+          email: 'test@example.com',
+          entries: 256500, // User has enough entries
         },
-        orders: mockUserEntries.orders,
+        orders: [
+          {
+            id: 1,
+            date_created: '2024-01-15T10:30:00Z',
+            product_name: 'Forex - Pro Challenge - 5K - MatchTrader - NONE',
+            entries: 125000,
+            status: 'completed',
+          },
+          {
+            id: 2,
+            date_created: '2024-01-20T14:20:00Z',
+            product_name: 'Forex - Pro Challenge - 10K - MatchTrader - NONE',
+            entries: 131500,
+            status: 'completed',
+          },
+        ],
+        rewards: mockGiveawayData.past,
       };
+      
       setData(mockData);
-      setError('No token parameter found in URL. Add ?token=USER_ID to the URL.');
+      setError(null);
+      setErrorStatus(null);
       setUsingMockData(true);
       setLoading(false);
       return;
@@ -37,49 +78,22 @@ export function useRewards() {
 
     try {
       setLoading(true);
+      setError(null);
+      setErrorStatus(null);
       const result = await fetchJSON(getUserRewardsRoute(userId));
       
-      // Transform the API response to match the expected structure
-      const transformedData = {
-        giveaway: result.giveaway,
-        progress: {
-          display_pct: result.progress?.display_pct || 0,
-          true_pct: result.progress?.true_pct || 0,
-          target_entries: result.progress?.target_entries || result.giveaway?.target_entries || 0,
-          current_tickets: result.progress?.current_tickets || 0,
-        },
-        user: {
-          id: result.user?.id || userId,
-          name: result.user?.name || null,
-          email: result.user?.email || null,
-          entries: result.user?.entries || 0,
-        },
-        orders: result.orders || [],
-      };
-      
-      setData(transformedData);
+      // API response structure matches the new schema
+      // No transformation needed - use response as-is
+      setData(result);
       setError(null);
+      setErrorStatus(null);
       setUsingMockData(false);
     } catch (err) {
-      // Use mock data on error so UI still renders
-      console.warn('API call failed, using mock data:', err.message);
-      const mockData = {
-        giveaway: mockGiveawayData.giveaway,
-        progress: {
-          ...mockGiveawayData.progress,
-          current_tickets: 3275,
-        },
-        user: {
-          id: userId,
-          name: 'John Doe',
-          email: 'john.doe@example.com',
-          entries: mockUserEntries.entries,
-        },
-        orders: mockUserEntries.orders,
-      };
-      setData(mockData);
-      setError(err.message);
-      setUsingMockData(true);
+      console.error('API call failed:', err);
+      setError(err.message || 'Failed to load rewards data');
+      setErrorStatus(err.status || err.statusCode || 500);
+      setData(null);
+      setUsingMockData(false);
     } finally {
       setLoading(false);
     }
@@ -87,14 +101,14 @@ export function useRewards() {
 
   useEffect(() => {
     loadRewards();
-    const interval = setInterval(loadRewards, 60000); // Auto-refresh every 60s
-    return () => clearInterval(interval);
+    // No auto-refresh - only refresh when user clicks the refresh button
   }, []);
 
   return { 
     data, 
     loading, 
-    error, 
+    error,
+    errorStatus,
     usingMockData, 
     refetch: loadRewards 
   };

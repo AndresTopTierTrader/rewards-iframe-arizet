@@ -19,7 +19,7 @@ export function niceStatus(status) {
 export function statusClass(status) {
   const s = (status ?? '').toLowerCase();
   if (s === 'unlocked') return 'pill pill--good';
-  if (s === 'active') return 'pill';
+  if (s === 'active') return 'pill pill--good';
   if (s === 'scheduled') return 'pill pill--muted';
   if (s === 'paused') return 'pill pill--warn';
   return 'pill pill--muted';

@@ -2,7 +2,7 @@
 // in production use full URL so requests go to api.tx3funding.com, not the iframe origin.
 const API_BASE = import.meta.env.DEV
   ? '/api/iframe/rewards'
-  : 'https://api.tx3funding.com/api/iframe/rewards';
+  : 'http://localhost:8000/api/iframe/rewards';
 
 // Default API key for Arizet endpoint
 const DEFAULT_API_KEY = 'vSSI4iMuwMZjCbMgzYDIj3o33dK3niKyYdPgrSil6xjdVzSQ0SQyZWt9mfVgXYSZr2hUMJPwYgni5TgfcL53leIcE3AxCjJrMuCxkCvtiOOHgU5a4fKRilacGeNOU3I7';
@@ -14,7 +14,7 @@ export function getApiKey() {
   if (urlKey) return urlKey;
   
   // Fallback to environment variable (if set in build)
-  const envKey = import.meta.env.VITE_API_KEY;
+  const envKey = import.meta.env.VITE_API_KEY || import.meta.env.VITE_REWARDS_API_KEY;
   if (envKey) return envKey;
   
   // Use default API key
@@ -47,26 +47,21 @@ export async function fetchJSON(url, opts = {}) {
     ...(opts.headers || {}),
   };
 
-  // Add API key to headers if available
+  // Auth: x-api-key header only (avoid apiKey in query string)
   if (apiKey) {
     headers['X-Api-Key'] = apiKey;
   }
 
-  // Also add to URL if not in headers (fallback)
-  const urlWithKey = apiKey && !headers['X-Api-Key'] 
-    ? `${url}${url.includes('?') ? '&' : '?'}apiKey=${apiKey}`
-    : url;
-
-  const res = await fetch(urlWithKey, {
+  const res = await fetch(url, {
     ...opts,
     headers,
   });
-  
+
   if (!res.ok) {
     const txt = await res.text();
     let json = null;
     try { json = txt ? JSON.parse(txt) : null; } catch {}
-    const msg = json && json.detail ? json.detail : (txt || res.statusText);
+    const msg = (json && (json.message ?? json.detail)) || txt || res.statusText;
     const error = new Error(`${res.status} ${res.statusText}: ${msg}`);
     error.status = res.status;
     error.statusCode = res.status;
@@ -86,15 +81,15 @@ export function apiRoute(path) {
   return `${API_BASE}${path}`;
 }
 
-// Get user rewards data (single endpoint)
+// Get user rewards data: GET /api/iframe/rewards/{user_id}
 export function getUserRewardsRoute(userId) {
-  return `${API_BASE}/${userId}`;
+  return `${API_BASE}/${encodeURIComponent(userId)}`;
 }
 
 // Claim prize endpoint - PUT request to mark giveaway as inactive and blocked
 const REWARDS_API_BASE = import.meta.env.DEV
   ? '/api'
-  : 'https://api.tx3funding.com/api';
+  : 'http://localhost:8000/api';
 export function claimPrizeRoute(giveawayId) {
   // Note: This endpoint is different from the iframe rewards endpoint
   return `${REWARDS_API_BASE}/rewards/giveaways/${giveawayId}`;

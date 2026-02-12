@@ -127,3 +127,4 @@ Test with:
 ```
 
 The component should mount once and stay mounted, only updating the iframe height when messages are received.
+Please understand how the current logic inside my project works, specially the part using Arizet API

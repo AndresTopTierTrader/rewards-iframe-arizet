@@ -1,17 +1,24 @@
 import { useRewards } from '../hooks/useRewards';
+import { getUserId } from '../utils/api';
 import { Hero } from '../components/Hero';
+import { Landing } from '../components/Landing';
 import { UserProfile } from '../components/UserProfile';
 import { PastRewards } from '../components/PastRewards';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorScreen } from '../components/ErrorScreen';
 import { formatDate, safeText, tagClass } from '../utils/formatters';
 import { mockGiveawayData } from '../utils/mockData';
-import { HiArrowPath, HiTicket, HiShoppingBag, HiCalendar, HiSquares2X2, HiCheckCircle, HiTrophy, HiExclamationTriangle, HiInformationCircle } from 'react-icons/hi2';
+import { HiArrowPath, HiTicket, HiShoppingBag, HiTrophy, HiExclamationTriangle, HiInformationCircle } from 'react-icons/hi2';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/app.css';
 
 export function Community() {
   const { data, loading, error, errorStatus, usingMockData, refetch } = useRewards();
+
+  // When there's no ?token= in the URL, show the landing/welcome screen
+  if (!getUserId()) {
+    return <Landing />;
+  }
 
   const giveaway = data?.giveaway;
   const progress = data?.progress;
@@ -20,9 +27,9 @@ export function Community() {
   const orders = data?.orders || [];
   const authenticated = !!user;
 
-  const topbarSub = giveaway ? 'Rewards for the TX3 community' : 'No active reward is configured yet.';
+  const topbarSub = giveaway ? 'Rewards for the TX3 community' : (data?.ui?.progressText || 'No active reward is configured yet.');
   const myEntries = entries != null && typeof entries === 'number'
-    ? (entries % 1 === 0 ? entries.toFixed(0) : entries.toFixed(1))
+    ? entries.toLocaleString(undefined, { maximumFractionDigits: 1 })
     : '—';
   const myOrdersCount = orders.length;
 
@@ -40,7 +47,7 @@ export function Community() {
 
   const entriesText = (entries) => {
     const e = Number(entries || 0);
-    return e % 1 === 0 ? e.toFixed(0) : e.toFixed(1);
+    return e.toLocaleString(undefined, { maximumFractionDigits: 1 });
   };
 
   const handleRefresh = async () => {
@@ -71,13 +78,16 @@ export function Community() {
     );
   }
 
+  const premiumTransition = { duration: 0.6, ease: [0.32, 0.72, 0, 1] };
+  const stagger = (i) => ({ ...premiumTransition, delay: 0.06 * i });
+
   return (
     <div className="page page--wide">
       <motion.header 
         className="topbar"
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={stagger(0)}
       >
         <div className="topbar__left">
           <motion.img 
@@ -124,23 +134,57 @@ export function Community() {
         </AnimatePresence>
         
         <>
-          <Hero 
-              giveaway={giveaway} 
-              progress={progress} 
-              user={user}
-              onClaimSuccess={refetch}
-            />
+          {giveaway ? (
+            <motion.div
+              className="layout__hero"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={stagger(1)}
+            >
+              <Hero 
+                giveaway={giveaway} 
+                progress={progress} 
+                user={user}
+                ui={data?.ui}
+                onClaimSuccess={refetch}
+              />
+            </motion.div>
+          ) : data?.ui && (
+            <motion.section
+              className="card hero"
+              id="hero"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={stagger(1)}
+              style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '48px 24px' }}
+            >
+              <HiTrophy style={{ fontSize: '48px', color: 'var(--textSecondary)', marginBottom: '16px' }} />
+              <h2 className="hero__title" style={{ fontSize: '22px', marginBottom: '8px' }}>
+                No active reward
+              </h2>
+              <p className="hero__desc" style={{ margin: 0 }}>
+                {data.ui.progressText || 'Check back later for the next community reward.'}
+              </p>
+            </motion.section>
+          )}
             
             {authenticated && user && (
-              <UserProfile user={user} firstPurchase={firstPurchase} />
+              <motion.div
+                className="layout__userProfile"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={stagger(2)}
+              >
+                <UserProfile user={user} firstPurchase={firstPurchase} />
+              </motion.div>
             )}
 
             <motion.section 
               className="card" 
               id="meCard"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+              transition={stagger(3)}
             >
               <div className="card__title">
                 <HiTicket style={{ fontSize: '20px' }} />
@@ -189,22 +233,10 @@ export function Community() {
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>
-                        <HiCalendar style={{ fontSize: '12px', marginRight: '4px', verticalAlign: 'middle' }} />
-                        Date
-                      </th>
-                      <th>
-                        <HiSquares2X2 style={{ fontSize: '12px', marginRight: '4px', verticalAlign: 'middle' }} />
-                        Product
-                      </th>
-                      <th className="right">
-                        <HiTicket style={{ fontSize: '12px', marginRight: '4px', verticalAlign: 'middle' }} />
-                        Entries
-                      </th>
-                      <th>
-                        <HiCheckCircle style={{ fontSize: '12px', marginRight: '4px', verticalAlign: 'middle' }} />
-                        Status
-                      </th>
+                      <th>Date</th>
+                      <th>Product</th>
+                      <th className="right">Entries</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -217,10 +249,10 @@ export function Community() {
                     ) : (
                       orders.map((r, index) => (
                         <motion.tr 
-                          key={r.id ?? r.date_created + r.product_name}
-                          initial={{ opacity: 0, x: -20 }}
+                          key={r.id ?? r.order_id ?? r.date_created + r.product_name}
+                          initial={{ opacity: 0, x: -12 }}
                           animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
+                          transition={{ duration: 0.45, delay: 0.35 + index * 0.04, ease: [0.32, 0.72, 0, 1] }}
                           whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
                         >
                           <td>{formatDate(r.date_created)}</td>
@@ -238,9 +270,9 @@ export function Community() {
             <motion.section 
               className="card card--scrollable" 
               id="pastCard"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+              transition={stagger(4)}
             >
               <div className="card__title">
                 <HiTrophy style={{ fontSize: '20px' }} />
@@ -253,9 +285,9 @@ export function Community() {
 
             <motion.section 
               className="footerNote"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={stagger(5)}
             >
               Entries are calculated from eligible purchases and may update with a short delay.
             </motion.section>

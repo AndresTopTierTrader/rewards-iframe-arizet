@@ -13,10 +13,10 @@ export function PastRewards({ past }) {
         <motion.div 
           key={reward.id} 
           className="miniCard"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: index * 0.1 }}
-          whileHover={{ scale: 1.05, y: -4 }}
+          initial={{ opacity: 0, y: 16, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.5 + index * 0.06, ease: [0.32, 0.72, 0, 1] }}
+          whileHover={{ scale: 1.02, y: -4 }}
         >
           <div className="miniCard__imgWrap">
             <img 

@@ -33,6 +33,112 @@ body {
   letter-spacing: -0.01em;
 }
 
+/* Landing (no token) */
+.landing {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.landing__card {
+  max-width: 480px;
+  text-align: center;
+  padding: 48px 40px;
+  background: linear-gradient(to bottom, #0F1624, #0B1020);
+  border: 1px solid var(--borderDark);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.landing__logo {
+  width: auto;
+  height: 48px;
+  margin-bottom: 28px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.landing__title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--textPrimary);
+  margin: 0 0 16px;
+  line-height: 1.2;
+}
+
+.landing__description {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--textSecondary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.landing__form {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+
+.landing__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.landing__btn {
+  flex-shrink: 0;
+}
+
+.landing__btnContent {
+  display: inline-flex;
+  align-items: center;
+}
+
+.landing__successWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+  min-height: 140px;
+}
+
+.landing__successIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(101, 253, 81, 0.2), rgba(0, 82, 180, 0.15));
+  border: 2px solid rgba(101, 253, 81, 0.4);
+  color: var(--futuresGreen);
+  margin-bottom: 20px;
+  box-shadow: 0 0 32px rgba(101, 253, 81, 0.15);
+}
+
+.landing__successText {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--textSecondary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 520px) {
+  .landing__form {
+    flex-direction: column;
+  }
+  .landing__btn {
+    width: 100%;
+  }
+}
+
 /* Radial Hero Background */
 .bgHero {
   background-color: var(--bgDark);
@@ -177,6 +283,7 @@ body {
   border-radius: 20px;
   position: relative;
   overflow: hidden;
+  align-items: center;
 }
 
 .hero::after {
@@ -197,6 +304,7 @@ body {
 
 .hero--locked .hero__title,
 .hero--locked .hero__meta,
+.hero--locked .hero__metaRow,
 .hero--locked .hero__desc {
   color: var(--textSecondary);
   opacity: 0.8;
@@ -210,11 +318,13 @@ body {
   overflow: hidden;
   background: linear-gradient(to bottom, #0B2A4A, #081C33);
   border: 1px solid rgba(0, 82, 180, 0.2);
+  width: 100%;
+  aspect-ratio: 16 / 9;
 }
 
 .hero__img {
   width: 100%;
-  height: auto;
+  height: 100%;
   object-fit: cover;
   display: block;
   transition: filter 0.3s ease;
@@ -227,7 +337,7 @@ body {
 .hero__body {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
   z-index: 1;
 }
 
@@ -247,6 +357,20 @@ body {
   letter-spacing: -0.01em;
 }
 
+/* Status + estimated value: same pill style and icon; one row on desktop */
+.hero__metaRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 769px) {
+  .hero__metaRow {
+    flex-wrap: nowrap;
+  }
+}
+
 .hero__desc {
   font-size: 15px;
   color: var(--textSecondary);
@@ -254,13 +378,13 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* User Profile */
+/* User Profile - compact to match hero/reward container height */
 .userProfile {
   grid-column: 9 / -1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 32px;
+  gap: 30px;
+  padding: 20px;
   background: linear-gradient(to bottom, #0F1624, #0B1020);
   border: 1px solid var(--borderDark);
   border-radius: 20px;
@@ -283,13 +407,13 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   z-index: 1;
 }
 
 .userProfile__avatar {
-  width: 80px;
-  height: 80px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: linear-gradient(to bottom, #0B2A4A, #081C33);
   border: 2px solid rgba(101, 253, 81, 0.3);
@@ -318,18 +442,18 @@ body {
 .userProfile__body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   z-index: 1;
 }
 
 .userProfile__item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  border-radius: 10px;
   transition: all 0.2s ease;
 }
 
@@ -342,11 +466,11 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .userProfile__label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -355,7 +479,7 @@ body {
 }
 
 .userProfile__value {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--textPrimary);
   letter-spacing: -0.01em;
@@ -446,12 +570,12 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .progressCard__label {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 18px;
   color: var(--textPrimary);
   letter-spacing: -0.01em;
 }
@@ -464,11 +588,15 @@ body {
 
 .progressCard__bottom {
   margin-top: 12px;
+  margin-left: auto;
+  margin-right: auto;
+  width: full;
+  max-width: 100%;
   padding: 12px 16px;
   background: rgba(101, 253, 81, 0.08);
   border: 1px solid rgba(101, 253, 81, 0.35);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 12px;
   color: var(--futuresGreen);
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -804,7 +932,7 @@ body {
 
 .miniCard__imgWrap {
   width: 100%;
-  height: 240px;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: linear-gradient(to bottom, #0B2A4A, #081C33);
   position: relative;
@@ -1021,7 +1149,15 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* Bento Grid Layouts */
+/* Bento Grid Layouts - Community page */
+.layout__hero {
+  grid-column: 1 / 9;
+}
+
+.layout__userProfile {
+  grid-column: 9 / -1;
+}
+
 #meCard {
   grid-column: 1 / 8;
 }
@@ -1038,6 +1174,11 @@ body {
 @media (max-width: 1024px) {
   .layout {
     grid-template-columns: repeat(6, 1fr);
+  }
+
+  .layout__hero,
+  .layout__userProfile {
+    grid-column: 1 / -1;
   }
   
   #meCard {
@@ -1075,6 +1216,11 @@ body {
   .layout {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .layout__hero,
+  .layout__userProfile {
+    grid-column: 1 / -1;
   }
   
   .form__row {
@@ -1149,16 +1295,16 @@ body {
   }
   
   .userProfile__avatar {
-    width: 64px;
-    height: 64px;
+    width: 52px;
+    height: 52px;
   }
   
   .userProfile__name {
-    font-size: 20px;
+    font-size: 16px;
   }
   
   .userProfile__body {
-    gap: 20px;
+    gap: 12px;
   }
   
   .hero__title {
@@ -1200,10 +1346,6 @@ body {
   .gridCards {
     grid-template-columns: 1fr;
     gap: 16px;
-  }
-  
-  .miniCard__imgWrap {
-    height: 300px;
   }
   
   .card__scrollableContent {
@@ -1257,6 +1399,11 @@ body {
   .page {
     padding: 8px;
   }
+
+  .layout__hero,
+  .layout__userProfile {
+    grid-column: 1 / -1;
+  }
   
   .topbar__title {
     font-size: 24px;
@@ -1272,7 +1419,7 @@ body {
   }
   
   .userProfile__name {
-    font-size: 20px;
+    font-size: 16px;
   }
   
   .hero {

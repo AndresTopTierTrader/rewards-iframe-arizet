@@ -51,13 +51,13 @@ You can set the API key via environment variable `VITE_API_KEY` or pass it as a 
 
 **Example:**
 ```bash
-curl "https://api.tx3funding.com/api/iframe/rewards/8571833690" \
+curl "http://localhost:8000/api/iframe/rewards/8571833690" \
   -H "X-Api-Key: YOUR_ARIZET_ENDPOINT_API_KEY"
 ```
 
 ### Main API Endpoint
 
-**Endpoint:** `GET https://api.tx3funding.com/api/iframe/rewards/{user_id}`
+**Endpoint:** `GET http://localhost:8000/api/iframe/rewards/{user_id}`
 
 This single endpoint returns all user-specific data needed to populate the UI, including past rewards.
 
@@ -193,7 +193,7 @@ All error screens include a "Try Again" button to retry the request.
 
 When a user is eligible to claim the prize (giveaway is unlocked/active and `locked` is `false`), they can click the "Claim Prize" button which will make a POST request to:
 
-**Endpoint:** `POST https://api.tx3funding.com/api/iframe/rewards/{reward_id}/winner`
+**Endpoint:** `POST http://localhost:8000/api/iframe/rewards/{reward_id}/winner`
 
 **Request Body:**
 ```json
@@ -213,7 +213,7 @@ The `claimed_at` timestamp is automatically generated when the button is clicked
 
 ```bash
 # User ID from URL token parameter
-curl "https://api.tx3funding.com/api/iframe/rewards/8571833690" \
+curl "http://localhost:8000/api/iframe/rewards/8571833690" \
   -H "X-Api-Key: YOUR_ARIZET_ENDPOINT_API_KEY"
 ```
 
@@ -256,7 +256,7 @@ src/
 ## Development Notes
 
 - The app uses React Router for navigation
-- All API calls are made to `https://api.tx3funding.com/api/iframe/rewards/{user_id}`
+- All API calls are made to `http://localhost:8000/api/iframe/rewards/{user_id}`
 - The `user_id` is extracted from the URL query parameter `token`
 - API key authentication is required via `X-Api-Key` header or `apiKey` query parameter
 - The app auto-refreshes data every 60 seconds

@@ -1,6 +1,48 @@
 import { useState, useEffect } from 'react';
 import { fetchJSON, getUserRewardsRoute, getUserId } from '../utils/api';
-import { mockGiveawayData, mockUserEntries } from '../utils/mockData';
+import { mockGiveawayData } from '../utils/mockData';
+
+// Normalize GET /api/iframe/rewards/{user_id} response to app shape.
+// API returns: { reward, user, progress, ui }. We map reward → giveaway (with legacy field names)
+// and ensure user has .id for claim; orders/rewards are not returned by API.
+function normalizeRewardsResponse(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const { reward, user, progress, ui } = raw;
+  const giveaway = reward
+    ? {
+        id: reward.reward_id,
+        reward_id: reward.reward_id,
+        status: reward.status,
+        prize_name: reward.reward_name,
+        reward_name: reward.reward_name,
+        description: reward.reward_description,
+        prize_image: reward.reward_image,
+        price_usd: reward.reward_shown_usd_value ?? reward.value_usd,
+        value_usd: reward.value_usd,
+        prize_tickets: reward.value_tickets,
+        value_tickets: reward.value_tickets,
+        progress_pct: reward.progress_pct,
+        start_at: reward.start_at,
+        finished_at: reward.finished_at,
+        unlocked_message: reward.unlocked_message,
+        locked: reward.locked,
+      }
+    : null;
+  return {
+    giveaway,
+    user: user
+      ? {
+          ...user,
+          id: user.user_id ?? user.id,
+          entries: user.entries ?? user.user_tickets ?? 0,
+        }
+      : null,
+    progress: progress ?? {},
+    ui: ui ?? {},
+    orders: user?.orders ?? raw.orders ?? [],
+    rewards: raw.rewards ?? [],
+  };
+}
 
 export function useRewards() {
   const [data, setData] = useState(null);
@@ -11,7 +53,7 @@ export function useRewards() {
 
   const loadRewards = async () => {
     const userId = getUserId();
-    
+
     if (!userId) {
       setError('No token parameter found in URL. Add ?token=USER_ID to the URL.');
       setErrorStatus(400);
@@ -22,52 +64,43 @@ export function useRewards() {
     // Special case: test-finished token shows mock data with completed progress
     if (userId === 'test-finished') {
       setLoading(true);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const mockData = {
-        giveaway: {
-          id: 'fXHVo5uRLaEPsdNnjgSq', // Use actual giveaway ID format
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const mockData = normalizeRewardsResponse({
+        reward: {
+          reward_id: 'fXHVo5uRLaEPsdNnjgSq',
           status: 'active',
-          prize_name: 'Rolex Datejust 41',
-          price_usd: 20921.93,
-          prize_image: 'https://res.cloudinary.com/dmkzxsw0i/image/upload/v1770323925/dfasa_xwwkog.png',
-          prize_tickets: 243000,
-          description: 'Win a stunning Rolex Datejust 41 watch! Participate in our community rewards program by making eligible purchases.',
+          reward_name: 'Rolex Datejust 41',
+          value_usd: 20921.93,
+          reward_image: 'https://res.cloudinary.com/dmkzxsw0i/image/upload/v1770323925/dfasa_xwwkog.png',
+          value_tickets: 243000,
+          reward_description: 'Win a stunning Rolex Datejust 41 watch! Participate in our community rewards program by making eligible purchases.',
           start_at: '2024-01-01T00:00:00Z',
           unlocked_message: 'Prize is still open! You can still win this prize.',
           locked: false,
-          blocked: false,
         },
         progress: {
-          display_pct: 105.5, // Above 100% to show claim button
-          current_tickets: 256500, // More than prize_tickets
+          display_pct: 105.5,
+          current_tickets: 256500,
+          user_tickets: 256500,
         },
         user: {
-          id: 9999999999,
+          user_id: '9999999999',
           name: 'Test User',
           email: 'test@example.com',
-          entries: 256500, // User has enough entries
+          entries: 256500,
         },
-        orders: [
-          {
-            id: 1,
-            date_created: '2024-01-15T10:30:00Z',
-            product_name: 'Forex - Pro Challenge - 5K - MatchTrader - NONE',
-            entries: 125000,
-            status: 'completed',
-          },
-          {
-            id: 2,
-            date_created: '2024-01-20T14:20:00Z',
-            product_name: 'Forex - Pro Challenge - 10K - MatchTrader - NONE',
-            entries: 131500,
-            status: 'completed',
-          },
-        ],
+        ui: {
+          canClaim: true,
+          claimState: 'available',
+          claimDisabledReason: null,
+          ticketsNeeded: 0,
+          progressText: 'Prize unlocked!',
+        },
+        orders: [],
         rewards: mockGiveawayData.past,
-      };
-      
+      });
+
       setData(mockData);
       setError(null);
       setErrorStatus(null);
@@ -81,10 +114,7 @@ export function useRewards() {
       setError(null);
       setErrorStatus(null);
       const result = await fetchJSON(getUserRewardsRoute(userId));
-      
-      // API response structure matches the new schema
-      // No transformation needed - use response as-is
-      setData(result);
+      setData(normalizeRewardsResponse(result));
       setError(null);
       setErrorStatus(null);
       setUsingMockData(false);
